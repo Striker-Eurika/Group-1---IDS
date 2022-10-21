@@ -1,0 +1,51 @@
+import pandas as pd
+import numpy as np
+import array as arr
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+import joblib
+
+df = pd.read_csv('GoodBadDataset.csv')
+df2 = pd.read_csv('predictThis.csv')
+
+
+y = df[['Label']]
+#print(y)
+
+x = df.drop(['Label', ], axis = 1)
+
+sc = MinMaxScaler()
+
+x = sc.fit_transform(x)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random_state=42)
+#print(train)
+#print(x)
+#print(x_train)
+model = GaussianNB()
+
+model.fit(x_train, y_train.values.ravel())
+
+
+y_test_pred = model.predict(x_test)
+#y_test_pred = y_test_pred.reshape(1, -1)
+#y_test = test_labels.values.ravel()
+
+#y_test = y_test.reshape(1,-1)
+#print(y_test)
+#print(y_test_pred)
+#print(y_test.values.ravel())
+
+joblib.dump(model,'mymodel.pkl')
+savedmodel = joblib.load('mymodel.pkl')
+
+accuracy_score(y_test, y_test_pred)
+print(x_train)
+
+df2 = df2.drop(['Label', ], axis = 1) // new data to test against model, 1 row. Label was originally 0.
+#print(df2)
+fit_new_input = sc.transform(df2)
+print(fit_new_input)
+pred = savedmodel.predict(fit_new_input.reshape(1,-1))
+print(pred) // 0 or 1 - correctly predicts single row to have a label of 0.
