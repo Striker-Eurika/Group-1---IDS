@@ -1,0 +1,2 @@
+Duration_window_flow,Avg_delta_time,Min_delta_time,Max_delta_time,StDev_delta_time,Avg_pkts_lenght,Min_pkts_lenght,Max_pkts_lenght,StDev_pkts_lenght,Label
+0.000125,1.25E-05,0,0.000125,4.17E-05,1445.4,1008,1494,153.6866943,0
