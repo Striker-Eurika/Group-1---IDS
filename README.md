@@ -1,2 +1,5 @@
-# Group-1---IPS
-Group 1 - Network Intrusion Prevention System
+# Group-1---IDS
+Group 1 - Network Intrusion Detection System
+Ingrid Melin
+Patryk Kaiser
+Daniel Mackey
