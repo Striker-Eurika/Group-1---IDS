@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from tensorflow.keras.models import Sequential, load_model
@@ -8,7 +9,11 @@ from sklearn.metrics import accuracy_score
 from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
 
-df = pd.read_csv('ThreeTargetDataset.csv')
+#tf.device("/cpu:0")
+df = pd.read_csv('MachineLearningCVE/Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv', sep=r'\s*,\s*', engine='python')
+pd.set_option('use_inf_as_na',True)
+df.dropna(inplace=True)
+df2 = pd.read_csv('predictThis.csv')
 label_encoder = preprocessing.LabelEncoder()
 df['Label']= label_encoder.fit_transform(df['Label'])
 df['Label'].unique()
@@ -28,7 +33,7 @@ print(X.columns)
 
 model.add(Dense(units=32, activation='relu', input_dim=len(X.columns)))
 model.add(Dense(units=16, activation='relu'))
-model.add(Dense(units=3, activation='sigmoid'))
+model.add(Dense(units=2, activation='sigmoid'))
 
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics='accuracy')
 
