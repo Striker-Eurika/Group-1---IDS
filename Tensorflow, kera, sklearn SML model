@@ -1,28 +1,33 @@
-import numpy as np
-import tensorflow as tf
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn import metrics
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense
-from sklearn.metrics import accuracy_score
+import joblib
+from tensorflow import keras
 from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Sequential, load_model
+from sklearn.metrics import accuracy_score
 
-#tf.device("/cpu:0")
-df = pd.read_csv('ThreeTargetDataset.csv', sep=r'\s*,\s*', engine='python')
+df = pd.read_csv('MachineLearningCVE/main.csv', sep=r'\s*,\s*', engine='python')
+df2 = pd.read_csv('MachineLearningCVE/main2.csv', sep=r'\s*,\s*', engine='python')
+df3 = pd.read_csv('MachineLearningCVE/main3.csv', sep=r'\s*,\s*', engine='python')
+df4 = pd.read_csv('MachineLearningCVE/main4.csv', sep=r'\s*,\s*', engine='python')
 
 pd.set_option('use_inf_as_na',True)
 df.dropna(inplace=True)
+df2.dropna(inplace=True)
+df3.dropna(inplace=True)
+df4.dropna(inplace=True)
 
 #df2 = pd.read_csv('predictThis.csv')
 label_encoder = preprocessing.LabelEncoder()
 
+frames = [df, df2, df3, df4]
 
-df['Label']= label_encoder.fit_transform(df['Label'])
+all = pd.concat(frames)
+
+all['Label']= label_encoder.fit_transform(all['Label'])
 #df['Label'].unique()
 
-y = df[['Label']]
+y = all[['Label']]
 #print(y)
 
 x = pd.get_dummies(all.drop(['Label', ], axis = 1))
