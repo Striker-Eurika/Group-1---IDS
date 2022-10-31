@@ -12,22 +12,13 @@ from sklearn.preprocessing import MinMaxScaler
 
 #tf.device("/cpu:0")
 df = pd.read_csv('MachineLearningCVE/main.csv', sep=r'\s*,\s*', engine='python')
-df2 = pd.read_csv('MachineLearningCVE/main2.csv', sep=r'\s*,\s*', engine='python')
-df3 = pd.read_csv('MachineLearningCVE/main3.csv', sep=r'\s*,\s*', engine='python')
-df4 = pd.read_csv('MachineLearningCVE/main4.csv', sep=r'\s*,\s*', engine='python')
 
 pd.set_option('use_inf_as_na',True)
 df.dropna(inplace=True)
-df2.dropna(inplace=True)
-df3.dropna(inplace=True)
-df4.dropna(inplace=True)
 
 #df2 = pd.read_csv('predictThis.csv')
 label_encoder = preprocessing.LabelEncoder()
 
-frames = [df, df2, df3, df4]
-
-all = pd.concat(frames)
 
 all['Label']= label_encoder.fit_transform(all['Label'])
 #df['Label'].unique()
@@ -47,7 +38,7 @@ model = Sequential()
 #model.add(Dense(units=32, activation='relu', input_dim=len(X.columns)))
 #model.flatten()
 #model.add(Dense(units=16, activation='relu'))
-#model.add(Dense(units=2, activation='sigmoid'))
+#model.add(Dense(units=3, activation='sigmoid'))
 
 #model.add(Dense(units=32, activation='relu', input_dim=len(X.columns)))
 model.add(tf.keras.Input(shape=len(X.columns,)))                     # input layer
