@@ -46,10 +46,11 @@ model.fit(x_train, y_train, epochs=50, batch_size=512)
 y_test_pred = model.predict(x_test)
 #print(y_test_pred)
 
+model.save("mymodel.h5")
+saved_model = keras.models.load_model("mymodel.h5")
+y_test_pred = saved_model.predict(x_test)
+
 pred_class = np.argmax(y_test_pred, axis=-1)
 #print(pred_class)
 print('Accuracy score: ', accuracy_score(y_test, pred_class)) #may be 1 because dataset is so different
 #model.summary()
-
-#joblib.dump(model,'mymodel.pkl')
-#savedmodel = joblib.load('mymodel.pkl')
