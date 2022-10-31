@@ -19,7 +19,7 @@ df.dropna(inplace=True)
 label_encoder = preprocessing.LabelEncoder()
 
 
-df['Label']= label_encoder.fit_transform(all['Label'])
+df['Label']= label_encoder.fit_transform(df['Label'])
 #df['Label'].unique()
 
 y = df[['Label']]
