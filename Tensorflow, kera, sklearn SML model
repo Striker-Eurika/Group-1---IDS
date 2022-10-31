@@ -62,7 +62,7 @@ print('Accuracy score: ', accuracy_score(y_test, pred_class))
 
 -------------------- PUT A NEW FILE HERE TO HAVE MODEL PREDICT
 df5 = pd.read_csv('MachineLearningCVE/BrandNewData.csv', sep=r'\s*,\s*', engine='python')
-df5 = pd.DataFrame(df2)
+df5 = pd.DataFrame(df5)
 df5.head()
 
 
@@ -72,7 +72,7 @@ x = sc.fit_transform(x)
 
 df5 = df5.drop(['Label', ], axis = 1)
 
-fit_new_input = sc.transform(df2)
+fit_new_input = sc.transform(df5)
 print(fit_new_input)
 pred = saved_model.predict(fit_new_input.reshape(1,-1))
 print(pred)
