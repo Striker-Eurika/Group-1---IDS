@@ -1,15 +1,18 @@
-import joblib
-from tensorflow import keras
+import numpy as np
+import tensorflow as tf
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.layers import Dense
+from sklearn.metrics import accuracy_score
 from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.models import Sequential, load_model
-from sklearn.metrics import accuracy_score
 
-df = pd.read_csv('MachineLearningCVE/main.csv', sep=r'\s*,\s*', engine='python')
-df2 = pd.read_csv('MachineLearningCVE/main2.csv', sep=r'\s*,\s*', engine='python')
-df3 = pd.read_csv('MachineLearningCVE/main3.csv', sep=r'\s*,\s*', engine='python')
-df4 = pd.read_csv('MachineLearningCVE/main4.csv', sep=r'\s*,\s*', engine='python')
+#df = pd.read_csv('MachineLearningCVE/main.csv', sep=r'\s*,\s*', engine='python')
+#df2 = pd.read_csv('MachineLearningCVE/main2.csv', sep=r'\s*,\s*', engine='python')
+#df3 = pd.read_csv('MachineLearningCVE/main3.csv', sep=r'\s*,\s*', engine='python')
+#df4 = pd.read_csv('MachineLearningCVE/main4.csv', sep=r'\s*,\s*', engine='python')
 
 pd.set_option('use_inf_as_na',True)
 df.dropna(inplace=True)
@@ -39,7 +42,6 @@ X = pd.DataFrame(x_train)
 
 model = Sequential()
 
-#model.add(Dense(units=32, activation='relu', input_dim=len(X.columns)))
 model.add(tf.keras.Input(shape=len(X.columns,)))                     # input layer
 model.add(Dense(32, activation='relu'))
 model.add(Dense(16, activation='relu'))
@@ -47,7 +49,7 @@ model.add(Dense(15, activation='softmax'))
 
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics='accuracy')
 
-model.fit(x_train, y_train, epochs=50, batch_size=512)
+model.fit(x_train, y_train, epochs=2, batch_size=512)
 y_test_pred = model.predict(x_test)
 #print(y_test_pred)
 
@@ -60,11 +62,12 @@ pred_class = np.argmax(y_test_pred, axis=-1)
 print('Accuracy score: ', accuracy_score(y_test, pred_class))
 #model.summary()
 
-#-------------------- PUT A NEW FILE HERE TO HAVE MODEL PREDICT
+print("its prediction time.")
 df5 = pd.read_csv('MachineLearningCVE/BrandNewData.csv', sep=r'\s*,\s*', engine='python')
 df5 = pd.DataFrame(df5)
 df5.head()
 
+saved_model = keras.models.load_model("mymodel.h5")
 
 sc = MinMaxScaler()
 x = pd.get_dummies(all.drop(['Label', ], axis = 1))
@@ -77,7 +80,7 @@ print(fit_new_input)
 pred = saved_model.predict(fit_new_input.reshape(1,-1))
 print(pred)
 pred_class = np.argmax(pred, axis=-1)
+print(pred_class)
 
 predict = label_encoder.inverse_transform(pred_class)
 predict
-print(pred_class)
