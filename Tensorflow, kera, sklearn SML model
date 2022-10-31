@@ -57,7 +57,7 @@ y_test_pred = saved_model.predict(x_test)
 
 pred_class = np.argmax(y_test_pred, axis=-1)
 #print(pred_class)
-print('Accuracy score: ', accuracy_score(y_test, pred_class)) #may be 1 because dataset is so different
+print('Accuracy score: ', accuracy_score(y_test, pred_class))
 #model.summary()
 
 -------------------- PUT A NEW FILE HERE TO HAVE MODEL PREDICT
