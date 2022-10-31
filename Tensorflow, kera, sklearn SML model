@@ -1,6 +1,7 @@
-import pandas as pd
+## import pandas as pd
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from tensorflow.keras.models import Sequential, load_model
@@ -10,18 +11,31 @@ from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
 
 #tf.device("/cpu:0")
-df = pd.read_csv('MachineLearningCVE/Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv', sep=r'\s*,\s*', engine='python')
+df = pd.read_csv('MachineLearningCVE/main.csv', sep=r'\s*,\s*', engine='python')
+df2 = pd.read_csv('MachineLearningCVE/main2.csv', sep=r'\s*,\s*', engine='python')
+df3 = pd.read_csv('MachineLearningCVE/main3.csv', sep=r'\s*,\s*', engine='python')
+df4 = pd.read_csv('MachineLearningCVE/main4.csv', sep=r'\s*,\s*', engine='python')
+
 pd.set_option('use_inf_as_na',True)
 df.dropna(inplace=True)
-df2 = pd.read_csv('predictThis.csv')
+df2.dropna(inplace=True)
+df3.dropna(inplace=True)
+df4.dropna(inplace=True)
+
+#df2 = pd.read_csv('predictThis.csv')
 label_encoder = preprocessing.LabelEncoder()
-df['Label']= label_encoder.fit_transform(df['Label'])
-df['Label'].unique()
 
-y = df[['Label']]
-print(y)
+frames = [df, df2, df3, df4]
 
-x = pd.get_dummies(df.drop(['Label', ], axis = 1))
+all = pd.concat(frames)
+
+all['Label']= label_encoder.fit_transform(all['Label'])
+#df['Label'].unique()
+
+y = all[['Label']]
+#print(y)
+
+x = pd.get_dummies(all.drop(['Label', ], axis = 1))
 sc = MinMaxScaler()
 
 x = sc.fit_transform(x)
@@ -29,18 +43,28 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random
 X = pd.DataFrame(x_train)
 
 model = Sequential()
-print(X.columns)
+#print(X.columns)
+#model.add(Dense(units=32, activation='relu', input_dim=len(X.columns)))
+#model.flatten()
+#model.add(Dense(units=16, activation='relu'))
+#model.add(Dense(units=2, activation='sigmoid'))
 
-model.add(Dense(units=32, activation='relu', input_dim=len(X.columns)))
-model.add(Dense(units=16, activation='relu'))
-model.add(Dense(units=2, activation='sigmoid'))
+#model.add(Dense(units=32, activation='relu', input_dim=len(X.columns)))
+model.add(tf.keras.Input(shape=len(X.columns,)))                     # input layer
+model.add(Dense(32, activation='relu'))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(15, activation='softmax'))
 
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics='accuracy')
 
-model.fit(x_train, y_train, epochs=200, batch_size=32)
+model.fit(x_train, y_train, epochs=50, batch_size=512)
 y_test_pred = model.predict(x_test)
-print(y_test_pred)
+#print(y_test_pred)
 
 pred_class = np.argmax(y_test_pred, axis=-1)
-print(pred_class)
+#print(pred_class)
 print('Accuracy score: ', accuracy_score(y_test, pred_class)) #may be 1 because dataset is so different
+#model.summary()
+
+#joblib.dump(model,'mymodel.pkl')
+#savedmodel = joblib.load('mymodel.pkl')
