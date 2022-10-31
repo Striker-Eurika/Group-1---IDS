@@ -63,7 +63,8 @@ pred_class = np.argmax(y_test_pred, axis=-1)
 print('Accuracy score: ', accuracy_score(y_test, pred_class))
 #model.summary()
 
-print("its prediction time.")
+#################################
+
 df5 = pd.read_csv('MachineLearningCVE/BrandNewData.csv', sep=r'\s*,\s*', engine='python')
 df5 = pd.DataFrame(df5)
 df5.head()
