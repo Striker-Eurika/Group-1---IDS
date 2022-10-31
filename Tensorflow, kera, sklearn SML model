@@ -11,7 +11,7 @@ from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
 
 #tf.device("/cpu:0")
-df = pd.read_csv('MachineLearningCVE/main.csv', sep=r'\s*,\s*', engine='python')
+df = pd.read_csv('ThreeTargetDataset.csv', sep=r'\s*,\s*', engine='python')
 
 pd.set_option('use_inf_as_na',True)
 df.dropna(inplace=True)
