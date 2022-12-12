@@ -1,0 +1,10 @@
+# connecting the Datasets together
+machinelearning = pd.DataFrame()
+
+#importing all the csv files into a list
+csv_files = ['Friday-WorkingHours-Afternoon-DDos.pcap_ISCX', 'Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX', 'Friday-WorkingHours-Morning.pcap_ISCX', 'Monday-WorkingHours.pcap_ISCX', 'Thursday-WorkingHours-Afternoon-Infilteration.pcap_ISCX', 'Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX', 'Tuesday-WorkingHours.pcap_ISCX', 'Wednesday-workingHours.pcap_ISCX']
+
+#append all files together
+for file in csv_files:
+            df_temp = pd.read_csv('Data/' + file + '.csv')
+            machinelearning = machinelearning.append(df_temp, ignore_index=True)
