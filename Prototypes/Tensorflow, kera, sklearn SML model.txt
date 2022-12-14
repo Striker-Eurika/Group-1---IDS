@@ -47,3 +47,30 @@ pred_class = np.argmax(y_test_pred, axis=-1)
 #print(pred_class)
 print('Accuracy score: ', accuracy_score(y_test, pred_class))
 #model.summary()
+
+################## PREDICTION
+
+df = pd.read_csv('GoodKnownDataSet.csv', sep=r'\s*,\s*', engine='python')
+df = pd.DataFrame(df)
+df.drop(df.columns[[0,1,3,6]], axis=1, inplace=True)
+df.head()
+
+saved_model = keras.models.load_model("mymodel.h5")
+
+sc = MinMaxScaler()
+
+x = pd.get_dummies(df5.drop(['Label', ], axis = 1))
+x = sc.fit_transform(x)
+
+df = df.drop(['Label', ], axis = 1)
+
+
+fit_new_input = sc.transform(df)
+print(fit_new_input)
+pred = saved_model.predict(fit_new_input.reshape(-1,79))
+print(pred)
+pred_class = np.argmax(pred, axis=-1)
+print(pred_class)
+
+predict = label_encoder.inverse_transform(pred_class)
+predict
