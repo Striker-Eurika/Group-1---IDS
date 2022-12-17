@@ -54,8 +54,10 @@ def preprocess_dataset(df):
 	df = df[df["Flow ID"].str.contains("Flow ID") == False]
 	df = fix_data_types(df)
 	df = df.drop(columns=['Flow ID','Src IP','Src Port','Timestamp','Protocol','Dst IP'])
+	df=df.replace('Infinity',np.nan).dropna(axis = 0, how = 'any')
 	pd.set_option('use_inf_as_na',True)
 	df.dropna(inplace=True)
+	
 	return df
 
 
