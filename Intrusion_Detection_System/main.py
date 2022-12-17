@@ -13,16 +13,18 @@ from datetime import datetime
 import os
 import pickle
 import MySQLdb
-from enum import Enum
 
 
+# Database connection details
 host = "localhost"
 dbname = "intrusion_db"
 user = "ids_user"
 pwd = "ids_pass_123"
 
+# Create connection to MySQL database
 db = MySQLdb.connect(host,user,pwd,dbname) or die("Not connected!")
 
+# Dictionary to hold attack label and attack_id (for MySQL database)
 attacks = {'DDoS' : 1, 'PortScan': 2, 'Bot': 3, 'Infiltration': 4, 'Brute Force': 5, 'XSS': 6, 'Sql Injection': 7, 'FTP-Patator': 8, 'SSH-Patator': 9, 'DoS slowloris': 10, 'DoS Slowhttptest': 11, 'DoS Hulk': 12, 'DoS GoldenEye': 13, 'Heartbleed': 14}
 	
 
@@ -37,6 +39,7 @@ def load_flows():
 	df = pd.concat(csv_files)
 	df = preprocess_dataset(df)
 	return df
+
 
 def load_labels():
 	class_list = []
@@ -77,7 +80,8 @@ def prepare_input(df):
 	x = sc.fit_transform(x)
 
 	df = df.drop(columns=(['Label']))
-
+	
+	#return sc.transform(df.drop(columns=['Flow ID','Src IP','Src Port','Timestamp','Protocol','Dst IP']))
 	return sc.transform(df)
 
 
@@ -92,11 +96,10 @@ def predict_from_flow(fitted_input, model, label_encoder):
 
 	for prediction in predict_list:
 		if prediction != 'BENIGN':
-			print(prediction)
+			print('Attack of type:', prediction, 'detected!')
 			intrusions.append(prediction)
 			log_intrusion(prediction)
-	print(len(intrusions))
-	print(len(predict_list))
+	print('Scanned', len(predict_list), 'flows and detected', len(intrusions), 'intrusions.')
 
 
 def log_intrusion(attack_type):
@@ -104,19 +107,20 @@ def log_intrusion(attack_type):
 	try:
 		cursor = db.cursor()
 		try:
-			cursor.execute("INSERT INTO intrusion VALUES (DEFAULT, %s, DEFAULT)", (attack_id))
+			cursor.execute("INSERT INTO intrusion VALUES (DEFAULT, %s, DEFAULT)", (attack_id,))
 			db.commit()
 			cursor.close()
 		except MySQLdb.IntegrityError:
-			print("Insert failed!")
+			print("Database insert has failed!")
 		finally:
 			cursor.close()
 	except Exception as e:
 		print(e)
 
 
-model = keras.models.load_model("CIC_IDS_2017_COMPILED_FixedColumns-Model.h5")
-df = load_flows()
-label_encoder = encode_labels()
-fitted_input = prepare_input(df)
-predict_from_flow(fitted_input, model, label_encoder)
+if __name__ == "__main__":
+	model = keras.models.load_model("CIC_IDS_2017_COMPILED_FixedColumns-Model.h5")
+	df = load_flows()
+	label_encoder = encode_labels()
+	fitted_input = prepare_input(df)
+	predict_from_flow(fitted_input, model, label_encoder)
