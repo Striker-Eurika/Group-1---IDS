@@ -13,6 +13,7 @@ from datetime import datetime
 import os
 import pickle
 import MySQLdb
+import joblib
 
 
 # Database connection details
@@ -37,6 +38,7 @@ def load_flows():
 		if file.endswith('.csv'):
 		    csv_files.append(pd.read_csv(dir_path + '/' + file))
 	df = pd.concat(csv_files)
+	print('Loaded', df.shape[0], 'flows!')
 	df = preprocess_dataset(df)
 	return df
 
@@ -47,16 +49,19 @@ def load_labels():
 		for line in label_file:
 			next_label = line[:-1]
 			class_list.append(next_label)
+	print('Labels have successfully been loaded!')
 	return class_list
 
 
 def preprocess_dataset(df):
-	df = df[df["Flow ID"].str.contains("Flow ID") == False]
+	df = df[df["Flow ID"].str.contains("Flow ID") == False] # Remove the glitched extra columns row that gets added to the CSV
 	df = fix_data_types(df)
-	df = df.drop(columns=['Flow ID','Src IP','Src Port','Timestamp','Protocol','Dst IP'])
-	df=df.replace('Infinity',np.nan).dropna(axis = 0, how = 'any')
+	df = df.drop(columns=['Flow ID','Src IP','Src Port','Timestamp','Protocol','Dst IP']) # Drop unnecesssary columns
 	pd.set_option('use_inf_as_na',True)
-	df.dropna(inplace=True)
+	df = df.replace('Infinity',np.nan)
+	print('Dropping', df.isna().sum().sum(), 'NaN/Null/Infinity value rows...')
+	df = df.dropna(axis = 0, how = 'any')
+	# df.dropna(inplace=True)
 	
 	return df
 
@@ -76,17 +81,17 @@ def encode_labels():
 
 
 def prepare_input(df):
-	#sc = MinMaxScaler()
+	sc = MinMaxScaler()
 
-	#x = pd.get_dummies(df.drop(columns = (['Label'])))
-	#x = sc.fit_transform(x)
+	x = pd.get_dummies(df.drop(columns = (['Label'])))
+	x = sc.fit_transform(x)
 
 	df = df.drop(columns=(['Label']))
-	
-	#return sc.transform(df.drop(columns=['Flow ID','Src IP','Src Port','Timestamp','Protocol','Dst IP']))
-	#return sc.transform(df)
-	scaler_transform = load('scaler_transform.joblib')
-	return scaler_transform
+
+	return sc.transform(df)
+	#scaler_transform = joblib.load('scaler_transform.joblib')
+	#return scaler_transform
+
 
 def predict_from_flow(fitted_input, model, label_encoder):
 	intrusions = []
@@ -102,7 +107,7 @@ def predict_from_flow(fitted_input, model, label_encoder):
 			print('Attack of type:', prediction, 'detected!')
 			intrusions.append(prediction)
 			log_intrusion(prediction)
-	print('Scanned', len(predict_list), 'flows and detected', len(intrusions), 'intrusions.')
+	print('Scanned', len(df), 'flows and detected', len(intrusions), 'intrusions.')
 
 
 def log_intrusion(attack_type):
