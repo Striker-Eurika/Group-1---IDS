@@ -122,7 +122,7 @@ def log_intrusion(attack_type):
 
 
 if __name__ == "__main__":
-	model = keras.models.load_model("CIC_IDS_2017_COMPILED_FixedColumns-Model.h5")
+	model = keras.models.load_model("Model200kBenignAdded.h5")
 	df = load_flows()
 	label_encoder = encode_labels()
 	fitted_input = prepare_input(df)
