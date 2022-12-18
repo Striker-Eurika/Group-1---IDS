@@ -76,16 +76,17 @@ def encode_labels():
 
 
 def prepare_input(df):
-	sc = MinMaxScaler()
+	#sc = MinMaxScaler()
 
-	x = pd.get_dummies(df.drop(columns = (['Label'])))
-	x = sc.fit_transform(x)
+	#x = pd.get_dummies(df.drop(columns = (['Label'])))
+	#x = sc.fit_transform(x)
 
 	df = df.drop(columns=(['Label']))
 	
 	#return sc.transform(df.drop(columns=['Flow ID','Src IP','Src Port','Timestamp','Protocol','Dst IP']))
-	return sc.transform(df)
-
+	#return sc.transform(df)
+	scaler_transform = load('scaler_transform.joblib')
+	return scaler_transform
 
 def predict_from_flow(fitted_input, model, label_encoder):
 	intrusions = []
