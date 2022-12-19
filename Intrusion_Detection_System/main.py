@@ -71,88 +71,88 @@ def preprocess_dataset(df):
 	df = df[df["Flow ID"].str.contains("Flow ID") == False] # Remove the glitched extra columns row that gets added to the CSV
 	df = fix_data_types(df) # Pass the DataFrame to the fix_data_types function
 	df = df.drop(columns=['Flow ID','Src IP','Src Port','Timestamp','Protocol','Dst IP']) # Drop unnecesssary columns
-	pd.set_option('use_inf_as_na',True) # Set Pandas to treat infinity values as na
-	df = df.replace('Infinity',np.nan)
+	pd.set_option('use_inf_as_na',True) # Set Pandas to treat infinity values as N/A
+	df = df.replace('Infinity',np.nan) # Replace all infinities with np.nan
 	print('Dropping', df.isna().sum().sum(), 'NaN/Null/Infinity value rows...')
-	df = df.dropna(axis = 0, how = 'any')
+	df = df.dropna(axis = 0, how = 'any') # Drop all NaN/Null/Infinity value rows
 	# df.dropna(inplace=True)
 	
 	return df
 
 
 def fix_data_types(df):
-	with open('datatypes_dictionary.pickle', 'rb') as handle:
+	with open('datatypes_dictionary.pickle', 'rb') as handle: # This pickled dictionary contains the correct data types for each column
 		cols = pickle.load(handle)
-	df = df.astype(cols)
+	df = df.astype(cols) # Correct the data types of each column
 	return df
 
 
 def encode_labels():
-	class_list = load_labels()
-	label_encoder = preprocessing.LabelEncoder()
-	label_encoder.fit_transform(class_list)
+	class_list = load_labels() # Load the labels
+	label_encoder = preprocessing.LabelEncoder() # Create label encoder
+	label_encoder.fit_transform(class_list) # Fit transform the label encoder using our label list
 	return label_encoder
 
 
 def prepare_input(df):
 	sc = MinMaxScaler()
 
-	x = pd.get_dummies(df.drop(columns = (['Label'])))
-	x = sc.fit_transform(x)
+	x = pd.get_dummies(df.drop(columns = (['Label']))) # Get the dummies without label column
+	x = sc.fit_transform(x) # Fit transform the dummies
 
-	df = df.drop(columns=(['Label']))
-	predict_from_flow(sc.transform(df), model, label_encoder)
+	df = df.drop(columns=(['Label'])) # Drop label from DataFrame
+	predict_from_flow(sc.transform(df), model, label_encoder) # Pass to predict function
 	#return sc.transform(df)
 	#scaler_transform = joblib.load('scaler_transform.joblib')
 	#return scaler_transform
 
 
 def predict_from_flow(fitted_input, model, label_encoder):
-	intrusions = []
-	pred = model.predict(fitted_input)
+	intrusions = [] # Holds all detected intrusions
+	pred = model.predict(fitted_input) # Use loaded model to predict from fitted input
 
 	pred_class = np.argmax(pred, axis=-1)
 
 	predict = label_encoder.inverse_transform(pred_class)
-	predict_list = predict.tolist()
+	predict_list = predict.tolist() # Get predictions as list
 
 	for prediction in predict_list:
 		if prediction != 'BENIGN':
 			print('Attack of type:', prediction, 'detected!')
-			intrusions.append(prediction)
-			log_intrusion(prediction)
+			intrusions.append(prediction) # Add intrusion to list
+			log_intrusion(prediction) # Send intrusion details to MySQL
 	print('Scanned', len(predict_list), 'flows and detected', len(intrusions), 'intrusions.')
 
 
 def log_intrusion(attack_type):
-	attack_id = attacks[attack_type]
+	attack_id = attacks[attack_type] # Get the attack id from dictionary
 	try:
-		cursor = db.cursor()
+		cursor = db.cursor() # Open new MySQL cursor
 		try:
-			cursor.execute("INSERT INTO intrusion VALUES (DEFAULT, %s, DEFAULT)", (attack_id,))
-			db.commit()
-			cursor.close()
+			cursor.execute("INSERT INTO intrusion VALUES (DEFAULT, %s, DEFAULT)", (attack_id,)) # Execute insert to database
+			db.commit() # Commit the insert
+			cursor.close() # Close the cursor
 		except MySQLdb.IntegrityError:
 			print("Database insert has failed!")
 		finally:
-			cursor.close()
+			cursor.close() # Close the cursor
 	except Exception as e:
 		print(e)
 
 
 if __name__ == "__main__":
-	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y")
-	model = keras.models.load_model("Model200kBenignAdded.h5")
-	label_encoder = encode_labels()
+	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y") # Where to look for new flows
+	model = keras.models.load_model("Model200kBenignAdded.h5") # Prediction model to use
+	label_encoder = encode_labels() # Label encoder
 	
-	event_handler=MonitorFolder()
-	observer = Observer()
-	observer.schedule(event_handler, path=dir_path, recursive=True)
+	event_handler=MonitorFolder() # Folder monitor
+	observer = Observer() # Observer object
+	observer.schedule(event_handler, path=dir_path, recursive=True) # Observer the dir_path for changes
 	print("Monitoring started")
 	observer.start()
 	try:
 		while(True):
-			time.sleep(1)
+			time.sleep(1) # Keep checking for new file every second
 	#fitted_input = prepare_input(df)
 	#predict_from_flow(fitted_input, model, label_encoder)
 		   
