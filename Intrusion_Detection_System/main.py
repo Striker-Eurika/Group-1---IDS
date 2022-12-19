@@ -14,6 +14,10 @@ import os
 import pickle
 import MySQLdb
 import joblib
+import sys
+import time
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 
 # Database connection details
@@ -29,18 +33,28 @@ db = MySQLdb.connect(host,user,pwd,dbname) or die("Not connected!")
 attacks = {'DDoS' : 1, 'PortScan': 2, 'Bot': 3, 'Infiltration': 4, 'Brute Force': 5, 'XSS': 6, 'Sql Injection': 7, 'FTP-Patator': 8, 'SSH-Patator': 9, 'DoS slowloris': 10, 'DoS Slowhttptest': 11, 'DoS Hulk': 12, 'DoS GoldenEye': 13, 'Heartbleed': 14}
 	
 
-def load_flows():
+class MonitorFolder(FileSystemEventHandler):
+    def on_created(self, event):
+    	filename = event.src_path
+    	if filename.endswith('.csv'):
+         	print(event.src_path, 'has just been created... passing to prediction model!')
+         	time.sleep(30)
+         	load_flows(event.src_path)
+
+
+def load_flows(src_path):
 	df = pd.DataFrame()
 	csv_files = []
 	#dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y")
-	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/15_12_2022'
-	for file in os.listdir(dir_path):
-		if file.endswith('.csv'):
-		    csv_files.append(pd.read_csv(dir_path + '/' + file))
-	df = pd.concat(csv_files)
+	#dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/15_12_2022'
+	#for file in os.listdir(src_path):
+		#if file.endswith('.csv'):
+	df = pd.read_csv(src_path)
+	#df = pd.concat(csv_files)
 	print('Loaded', df.shape[0], 'flows!')
 	df = preprocess_dataset(df)
-	return df
+	prepare_input(df)
+	#return df
 
 
 def load_labels():
@@ -87,8 +101,8 @@ def prepare_input(df):
 	x = sc.fit_transform(x)
 
 	df = df.drop(columns=(['Label']))
-
-	return sc.transform(df)
+	predict_from_flow(sc.transform(df), model, label_encoder)
+	#return sc.transform(df)
 	#scaler_transform = joblib.load('scaler_transform.joblib')
 	#return scaler_transform
 
@@ -107,7 +121,7 @@ def predict_from_flow(fitted_input, model, label_encoder):
 			print('Attack of type:', prediction, 'detected!')
 			intrusions.append(prediction)
 			log_intrusion(prediction)
-	print('Scanned', len(df), 'flows and detected', len(intrusions), 'intrusions.')
+	print('Scanned', len(predict_list), 'flows and detected', len(intrusions), 'intrusions.')
 
 
 def log_intrusion(attack_type):
@@ -127,8 +141,21 @@ def log_intrusion(attack_type):
 
 
 if __name__ == "__main__":
+	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y")
 	model = keras.models.load_model("Model200kBenignAdded.h5")
-	df = load_flows()
 	label_encoder = encode_labels()
-	fitted_input = prepare_input(df)
-	predict_from_flow(fitted_input, model, label_encoder)
+	
+	event_handler=MonitorFolder()
+	observer = Observer()
+	observer.schedule(event_handler, path=dir_path, recursive=True)
+	print("Monitoring started")
+	observer.start()
+	try:
+		while(True):
+			time.sleep(1)
+	#fitted_input = prepare_input(df)
+	#predict_from_flow(fitted_input, model, label_encoder)
+		   
+	except KeyboardInterrupt:
+		observer.stop()
+		observer.join()
