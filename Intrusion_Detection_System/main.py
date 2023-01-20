@@ -102,16 +102,16 @@ def fix_data_types(df_flow):
 # Encode labels for prediction model
 def encode_labels():
 	class_list = load_labels()
-	label_encoder = preprocessing.LabelEncoder()
-	label_encoder.fit_transform(class_list)
+	label_encoder = preprocessing.LabelEncoder() # each feature vector is given a number based on string
+	label_encoder.fit_transform(class_list) # the number is applied
 	return label_encoder
 
 
 def prepare_input(df_flow):
-	sc = MinMaxScaler()
+	sc = MinMaxScaler() # calculate standard number between 0-1 for each cell
 
-	x = pd.get_dummies(df_flow.drop(columns = (['Label'])))
-	x = sc.fit_transform(x)
+	x = pd.get_dummies(df_flow.drop(columns = (['Label']))) # dataset without the label column
+	x = sc.fit_transform(x) # cells tranformed and fitted simultaneously with scaler
 
 	df_flow = df_flow.drop(columns=(['Label']))
 	predict_from_flow(sc.transform(df_flow), model, label_encoder)
@@ -121,9 +121,9 @@ def prepare_input(df_flow):
 
 
 def predict_from_flow(fitted_input, model, label_encoder):
-	pred = model.predict(fitted_input)
+	pred = model.predict(fitted_input) # a confidence number for each attack type is given
 
-	pred_class = np.argmax(pred, axis=-1)
+	pred_class = np.argmax(pred, axis=-1) # the highest confidence rating is selected
 
 	predict = label_encoder.inverse_transform(pred_class)
 	list_predictions = predict.tolist()
