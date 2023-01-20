@@ -111,10 +111,10 @@ def prepare_input(df_flow):
 	sc = MinMaxScaler() # calculate standard number between 0-1 for each cell
 
 	x = pd.get_dummies(df_flow.drop(columns = (['Label']))) # dataset without the label column
-	x = sc.fit_transform(x) # cells tranformed and fitted simultaneously with scaler
+	x = sc.fit_transform(x) # fit() gets mean and standard deviation, transform applies it to dataset
 
 	df_flow = df_flow.drop(columns=(['Label']))
-	predict_from_flow(sc.transform(df_flow), model, label_encoder)
+	predict_from_flow(sc.transform(df_flow), model, label_encoder) # transform unseen data with existing scalar object dimensions produced during training
 	#return sc.transform(df_flow)
 	#scaler_transform = joblib.load('scaler_transform.joblib')
 	#return scaler_transform
@@ -125,7 +125,7 @@ def predict_from_flow(fitted_input, model, label_encoder):
 
 	pred_class = np.argmax(pred, axis=-1) # the highest confidence rating is selected
 
-	predict = label_encoder.inverse_transform(pred_class)
+	predict = label_encoder.inverse_transform(pred_class) # transform number to previous string, example: 0 to infiltration, 1 to slowhttptest
 	list_predictions = predict.tolist()
 	list_anomalies = []
 	list_rows_of_interest = []
