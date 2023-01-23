@@ -35,8 +35,12 @@ db = MySQLdb.connect(host,user,pwd,dbname) or die("Not connected!")
 attacks = {'DDoS' : 1, 'PortScan': 2, 'Bot': 3, 'Infiltration': 4, 'Brute Force': 5, 'XSS': 6, 'Sql Injection': 7, 'FTP-Patator': 8, 'SSH-Patator': 9, 'DoS slowloris': 10, 'DoS Slowhttptest': 11, 'DoS Hulk': 12, 'DoS GoldenEye': 13, 'Heartbleed': 14}
 
 
-flow_count = 0
-anomaly_count = 0
+# The below variables are used to keep track of flow counts. These counts reset once a .csv file of flows has been processed.
+flow_count = 0 # This is to initialize the flow count to 0
+anomaly_count = 0 # This is to initialize the anomaly count to 0
+
+
+graph_update_interval_ms = 30000 # Interval for animation of graph (how often the graph updates)
 
 
 # This class is used to monitor the folder for any new CSV files
@@ -69,13 +73,12 @@ def load_flows(src_path):
 
 # Load prediction labels from .txt file
 def load_labels():
-	class_list = []
+	list_label = []
 	with open(r'labels.txt', 'r') as label_file:
 		for line in label_file:
-			next_label = line[:-1]
-			class_list.append(next_label)
+			list_label.append(line[:-1])
 	print('Labels loaded.')
-	return class_list
+	return list_label
 
 
 # Function used to preprocess dataset
@@ -93,9 +96,9 @@ def preprocess_dataset(df_flow):
 
 # Function used to fix data types
 def fix_data_types(df_flow):
-	with open('datatypes_dictionary.pickle', 'rb') as handle:
+	with open('datatypes_dictionary.pickle', 'rb') as handle: # Opening the pickle file to read the column : datatype dictionary
 		cols = pickle.load(handle)
-	df_flow = df_flow.astype(cols)
+	df_flow = df_flow.astype(cols) # Set the data types by passing in the dictionary
 	return df_flow
 
 
@@ -108,18 +111,19 @@ def encode_labels():
 
 
 def prepare_input(df_flow):
-	sc = MinMaxScaler()
+	sc = MinMaxScaler() # We are using the MinMax scaler from ScikitLearn, used to scale features to a given range
 
 	x = pd.get_dummies(df_flow.drop(columns = (['Label'])))
-	x = sc.fit_transform(x)
+	x = sc.fit_transform(x) # Fitting the data
 
-	df_flow = df_flow.drop(columns=(['Label']))
-	predict_from_flow(sc.transform(df_flow), model, label_encoder)
+	df_flow = df_flow.drop(columns=(['Label'])) # Dropping label flow as we do not need it to perform a prediction. Prediction output will be the label
+	predict_from_flow(sc.transform(df_flow), model, label_encoder) # Calling predict_from_flow function and passing the MinMax transformed flow data, the model and the label encoder
 	#return sc.transform(df_flow)
 	#scaler_transform = joblib.load('scaler_transform.joblib')
 	#return scaler_transform
 
 
+# Creates a list of predictions from fitted flow input, a model and a label encoder
 def predict_from_flow(fitted_input, model, label_encoder):
 	pred = model.predict(fitted_input)
 
@@ -130,18 +134,17 @@ def predict_from_flow(fitted_input, model, label_encoder):
 	list_anomalies = []
 	list_rows_of_interest = []
 	for i in range (len(list_predictions)):
-		if list_predictions[i] != 'BENIGN':
-			print('Anomaly predicted to be', list_predictions[i], 'detected. Confidence: ', pred[i].max())
-			list_anomalies.append(list_predictions[i])
-			log_intrusion(list_predictions[i])
-			log_details(df_detail.iloc[i])
+		if list_predictions[i] != 'BENIGN': # Ignore BENIGN label outputs
+			print('Anomaly predicted to be', list_predictions[i], 'detected. Confidence: ', pred[i].max()) # Print a message if an anomaly has been identified
+			list_anomalies.append(list_predictions[i]) # Add this prediction to the list of predictions
+			log_intrusion(list_predictions[i]) # Call the function responsible for logging details of the intrusion into the MySQL database
+			log_details(df_detail.iloc[i])# Another function responsible for MySQL. This method logs extra information about the anomalous flows into the database
 	global flow_count
 	global anomaly_count
-	flow_count = len(list_predictions)
-	anomaly_count = len(list_anomalies)
-	#visualization()
-	print('Scanned', flow_count, 'flow(s) and detected', anomaly_count, 'anomalies.')
-	print('\nMonitoring...')
+	flow_count = len(list_predictions) # Set count of scanned flows
+	anomaly_count = len(list_anomalies) # Set count of identified anomalies
+	print('Scanned', flow_count, 'flow(s) and detected', anomaly_count, 'anomalies.') # Display details of scan
+	print('\nAwaiting flow data...') # Inform program supervisor that the program is once again monitoring for new flow data
 
 
 def log_intrusion(attack_type):
@@ -224,15 +227,15 @@ def display_initial_splash():
 	print("INTRUSION DETECTION SYSTEM")
 	print("Patryk Kaiser, Daniel Mackey, Ingrid Melin")
 	print("----")
-	print("\nMonitoring...")
+	print("Awaiting flow data...")
 	
 
 if __name__ == "__main__":
 	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y") # This is the path to the CICFlowMeter directory
 	model = keras.models.load_model("modelfixed.h5") # Loading the saved Keras model
-	label_encoder = encode_labels()
-	event_handler = MonitorFolder()
-	observer = Observer()
+	label_encoder = encode_labels() # Call label encoding function
+	event_handler = MonitorFolder() # Create new event to handle monitoring the directory
+	observer = Observer() # New observer to watch csv directory
 	observer.schedule(event_handler, path=dir_path, recursive=True)
 	observer.start()
 
@@ -250,7 +253,7 @@ if __name__ == "__main__":
 	xs2 = [] # X values list for second subplot
 	ys2 = [] # Y values list for second subplot
 	
-	ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys, xs2, ys2), interval=30000) # Call the animation function passing the figure, function arguments and the interval (in ms)
+	ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys, xs2, ys2), interval=graph_update_interval_ms) # Call the animation function passing the figure, function arguments and the interval (in ms)
 	plt.show() # Show the graph
 	try:
 		while(True):
