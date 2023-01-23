@@ -102,30 +102,30 @@ def fix_data_types(df_flow):
 # Encode labels for prediction model
 def encode_labels():
 	class_list = load_labels()
-	label_encoder = preprocessing.LabelEncoder() # each feature vector is given a number based on string
-	label_encoder.fit_transform(class_list) # the number is applied
+	label_encoder = preprocessing.LabelEncoder()
+	label_encoder.fit_transform(class_list)
 	return label_encoder
 
 
 def prepare_input(df_flow):
-	sc = MinMaxScaler() # calculate standard number between 0-1 for each cell
+	sc = MinMaxScaler()
 
-	x = pd.get_dummies(df_flow.drop(columns = (['Label']))) # dataset without the label column
-	x = sc.fit_transform(x) # fit() gets mean and standard deviation, transform applies it to dataset
+	x = pd.get_dummies(df_flow.drop(columns = (['Label'])))
+	x = sc.fit_transform(x)
 
 	df_flow = df_flow.drop(columns=(['Label']))
-	predict_from_flow(sc.transform(df_flow), model, label_encoder) # transform unseen data with existing scalar object dimensions produced during training
+	predict_from_flow(sc.transform(df_flow), model, label_encoder)
 	#return sc.transform(df_flow)
 	#scaler_transform = joblib.load('scaler_transform.joblib')
 	#return scaler_transform
 
 
 def predict_from_flow(fitted_input, model, label_encoder):
-	pred = model.predict(fitted_input) # a confidence number for each attack type is given
+	pred = model.predict(fitted_input)
 
-	pred_class = np.argmax(pred, axis=-1) # the highest confidence rating is selected
+	pred_class = np.argmax(pred, axis=-1)
 
-	predict = label_encoder.inverse_transform(pred_class) # transform number to previous string, example: 0 to infiltration, 1 to slowhttptest
+	predict = label_encoder.inverse_transform(pred_class)
 	list_predictions = predict.tolist()
 	list_anomalies = []
 	list_rows_of_interest = []
@@ -179,37 +179,46 @@ def log_details(row):
 		print(e)
 	
 
-def visualization():
-	style.use('fivethirtyeight')
-	figure, axis = plt.subplots(1, 2)
-	 
-	X = list_time_scans
-	Y1 = list_flow_counts
-	Y2 = list_anomaly_counts
+# Function used to animate the graph
+def animate(i, xs, ys, xs2, ys2):
+	xs.append(datetime.now().strftime('%H:%M:%S')) # Add current time to x list for subplot 1
+	ys.append(flow_count) # Add flow count to y list for subplot 1
 
-	axis[0].plot(X, Y1)
-	axis[0].set_title("Flows over time")
-	axis[1].plot(X, Y2)
-	axis[1].set_title("Anomalies over time")
-	plt.show()
+	xs2.append(datetime.now().strftime('%H:%M:%S')) # Add current time to x list for subplot 2
+	ys2.append(anomaly_count) # Add anomaly count to y list for subplot 2
 
-
-# This function is called periodically from FuncAnimation
-def animate(i, xs, ys):
-	xs.append(datetime.now().strftime('%H:%M:%S'))
-	ys.append(flow_count)
 	xs = xs[-20:]
 	ys = ys[-20:]
-	ax.clear()
-	ax.plot(xs, ys)
+
+	xs2 = xs2[-20:]
+	ys2 = ys2[-20:]
+
+	ax.clear() # Clear subplot 1
+	ax.plot(xs, ys) # Plot the time and flow count on subplot 1
+
+	ay.clear() # Clear subplot 2
+	ay.plot(xs2, ys2) # Plot the time and anomaly count on subplot 2
+
 	plt.xticks(rotation=45, ha='right')
 	plt.subplots_adjust(bottom=0.30)
-	plt.title('Flows scanned over time')
-	plt.ylabel('Flows scanned')
+
+	ax.title.set_text('Flows scanned over time') # Set subplot 1 title text
+	ax.set_ylabel('Flows scanned') # Set y axis label for subplot 1
+
+	ay.title.set_text('Anomalies predicted over time') # Set subplot 1 title text
+	ay.set_ylabel('Anomalies predicted') # Set y axis label for subplot 2
+
+	ax.set_xlabel('Time')
+
+	# Adjusting position of second subplot (moving it down a little)
+	pos = ay.get_position() # Get current position of subplot
+	new_pos = [pos.x0, pos.y0-0.05, pos.width, pos.height] # Compute new position (move down 0.05)
+	ay.set_position(new_pos) # Set new position for subplot
 
 
-def visual():
-	os.system('cls' if os.name == 'nt' else 'clear')
+# Function displays a 'splash' message stating the name of the group members and project title
+def display_initial_splash():
+	os.system('cls' if os.name == 'nt' else 'clear') # Use os.system to clear the screen with cls for Linux and clear for Windows
 	print("----")
 	print("Group 1 - Cybersecurity and Data Analytics")
 	print("INTRUSION DETECTION SYSTEM")
@@ -219,20 +228,30 @@ def visual():
 	
 
 if __name__ == "__main__":
-	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y")
-	model = keras.models.load_model("modelfixed.h5")
+	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y") # This is the path to the CICFlowMeter directory
+	model = keras.models.load_model("modelfixed.h5") # Loading the saved Keras model
 	label_encoder = encode_labels()
-	event_handler=MonitorFolder()
+	event_handler = MonitorFolder()
 	observer = Observer()
 	observer.schedule(event_handler, path=dir_path, recursive=True)
 	observer.start()
-	visual()
-	fig = plt.figure()
-	ax = fig.add_subplot(1, 1, 1)
-	xs = []
-	ys = []
-	ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), interval=30000)
-	plt.show()
+
+	display_initial_splash()
+
+	# Displaying the live graph with Matplotlib
+	fig = plt.figure() # Create the figure
+
+	ax = fig.add_subplot(211) # First subplot (FLOWS)
+	ay = fig.add_subplot(212) # Second subplot (ANOMALIES)
+
+	xs = [] # X values list for first subplot
+	ys = [] # Y Values list for first subplot
+
+	xs2 = [] # X values list for second subplot
+	ys2 = [] # Y values list for second subplot
+	
+	ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys, xs2, ys2), interval=30000) # Call the animation function passing the figure, function arguments and the interval (in ms)
+	plt.show() # Show the graph
 	try:
 		while(True):
 			time.sleep(1)
