@@ -109,5 +109,13 @@ CREATE TABLE detail(
 	idle_std FLOAT,
 	idle_max FLOAT,
 	idle_min FLOAT,
+	source_ip VARCHAR(20),
+	destination_ip VARCHAR(20),
 	FOREIGN KEY (intrusion_id) REFERENCES intrusion(intrusion_id)
+);
+
+CREATE TABLE users (
+	user_id INT AUTO_INCREMENT PRIMARY KEY,
+	username VARCHAR(32) UNIQUE NOT NULL,
+	password VARCHAR(32) NOT NULL
 );
