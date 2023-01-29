@@ -57,15 +57,14 @@ df.head()
 
 saved_model = keras.models.load_model("mymodel.h5")
 
-sc = MinMaxScaler()
+#sc = MinMaxScaler() //no longer needed as long as sc is still in memory from train/testing seen above prediction section
 
 x = pd.get_dummies(df5.drop(['Label', ], axis = 1))
-x = sc.fit_transform(x)
 
-df = df.drop(['Label', ], axis = 1)
+#sc.transform(x)
+#df = df.drop(['Label', ], axis = 1)
 
-
-fit_new_input = sc.transform(df)
+fit_new_input = sc.transform(x)
 print(fit_new_input)
 pred = saved_model.predict(fit_new_input.reshape(-1,79))
 print(pred)
