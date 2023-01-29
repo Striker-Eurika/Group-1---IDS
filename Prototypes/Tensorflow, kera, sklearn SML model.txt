@@ -61,9 +61,6 @@ saved_model = keras.models.load_model("mymodel.h5")
 
 x = pd.get_dummies(df5.drop(['Label', ], axis = 1))
 
-#sc.transform(x)
-#df = df.drop(['Label', ], axis = 1)
-
 fit_new_input = sc.transform(x)
 print(fit_new_input)
 pred = saved_model.predict(fit_new_input.reshape(-1,79))
