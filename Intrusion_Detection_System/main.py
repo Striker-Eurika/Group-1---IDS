@@ -111,15 +111,15 @@ def encode_labels():
 
 
 def prepare_input(df_flow):
-	sc = MinMaxScaler() # We are using the MinMax scaler from ScikitLearn, used to scale features to a given range
-
+	#sc = MinMaxScaler() # We are using the MinMax scaler from ScikitLearn, used to scale features to a given range
+	sc = joblib.load('scaler_transformCIC17-CIC18.joblib')
 	x = pd.get_dummies(df_flow.drop(columns = (['Label'])))
-	x = sc.fit_transform(x) # Fitting the data
+	sc.transform(x) # Fitting the data
 
 	df_flow = df_flow.drop(columns=(['Label'])) # Dropping label flow as we do not need it to perform a prediction. Prediction output will be the label
 	predict_from_flow(sc.transform(df_flow), model, label_encoder) # Calling predict_from_flow function and passing the MinMax transformed flow data, the model and the label encoder
 	#return sc.transform(df_flow)
-	#scaler_transform = joblib.load('scaler_transform.joblib')
+	#
 	#return scaler_transform
 
 
@@ -232,7 +232,7 @@ def display_initial_splash():
 
 if __name__ == "__main__":
 	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y") # This is the path to the CICFlowMeter directory
-	model = keras.models.load_model("modelfixed.h5") # Loading the saved Keras model
+	model = keras.models.load_model("cic17-cic18.h5") # Loading the saved Keras model
 	label_encoder = encode_labels() # Call label encoding function
 	event_handler = MonitorFolder() # Create new event to handle monitoring the directory
 	observer = Observer() # New observer to watch csv directory
