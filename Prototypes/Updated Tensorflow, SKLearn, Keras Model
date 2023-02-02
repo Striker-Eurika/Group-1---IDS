@@ -9,7 +9,7 @@ def deleteRedudancy(rc):
                       'Bwd Bulk Rate Avg'], axis=1)
     return rc
 
-deleteRedudancy(ConcatenateAttackList)
+ConcatenateAttackList = deleteRedudancy(ConcatenateAttackList)
 
 #TF_GPU_HOST_MEM_LIMIT_IN_MB=5950
 #physical_devices = tf.config.list_physical_devices('GPU')
