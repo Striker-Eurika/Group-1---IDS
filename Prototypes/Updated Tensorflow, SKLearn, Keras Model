@@ -1,5 +1,5 @@
 def deleteRedudancy(rc):
-    rc = ConcatenateAttackList.drop(['Bwd PSH Flags',
+    rc = rc.drop(['Bwd PSH Flags',
                        'Bwd URG Flags',
                       'Fwd Bytes/Bulk Avg',
                       'Fwd Packet/Bulk Avg',
@@ -7,6 +7,7 @@ def deleteRedudancy(rc):
                       'Bwd Bytes/Bulk Avg',
                       'Bwd Packet/Bulk Avg',
                       'Bwd Bulk Rate Avg'], axis=1)
+
     return rc
 
 ConcatenateAttackList = deleteRedudancy(ConcatenateAttackList)
@@ -57,7 +58,7 @@ callback=tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='auto',
 print('EarlyStopping CallBack executed.')
 
 print('Beginning fitting...')    
-model_hist = model.fit(x_train, y_train, epochs=200, batch_size=256, verbose=1,
+model_hist = model.fit(x_train, y_train, epochs=300, batch_size=256, verbose=1,
                        callbacks=[callback],validation_data=validate)
 print('Fitting completed.')               
 model.save("sets/mymodel5.h5")
