@@ -226,7 +226,7 @@ def display_initial_splash():
 if __name__ == "__main__":
 	dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y") # This is the path to the CICFlowMeter directory
 	model = keras.models.load_model("cic17-cic18.h5") # Loading the saved Keras model
-	label_encoder = encode_labels() # Call label encoding function
+	label_encoder = joblib.load('label_encoder70.joblib') # Loading the label encoder from a joblib file
 	event_handler = MonitorFolder() # Create new event to handle monitoring the directory
 	observer = Observer() # New observer to watch csv directory
 	observer.schedule(event_handler, path=dir_path, recursive=True)
