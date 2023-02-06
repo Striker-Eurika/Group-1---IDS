@@ -32,7 +32,7 @@ pwd = "ids_pass_123"
 db = MySQLdb.connect(host,user,pwd,dbname) or die("Not connected!")
 
 # Dictionary to hold attack label and attack_id (for MySQL database)
-attacks = {'DDoS' : 1, 'PortScan': 2, 'Bot': 3, 'Infiltration': 4, 'Brute Force': 5, 'XSS': 6, 'Sql Injection': 7, 'FTP-Patator': 8, 'SSH-Patator': 9, 'DoS slowloris': 10, 'DoS Slowhttptest': 11, 'DoS Hulk': 12, 'DoS GoldenEye': 13, 'Heartbleed': 14}
+attacks = {'PortScan': 1, 'FTP-Patator': 2, 'SSH-Patator': 3, 'DoSHulk': 4, 'GoldenEye': 5}
 
 
 # The below variables are used to keep track of flow counts. These counts reset once a .csv file of flows has been processed.
