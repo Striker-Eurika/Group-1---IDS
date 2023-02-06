@@ -45,7 +45,7 @@ graph_update_interval_ms = 30000 # Interval for animation of graph (how often th
 
 # This class is used to monitor the folder for any new CSV files
 class MonitorFolder(FileSystemEventHandler):
-	def on_created(self, event):
+	def on_created(self, event): # File has been created
 		filename = event.src_path # Get new filename
 		if filename.endswith('.csv'): # If the file is a .csv file
 			print('New flow data created @', event.src_path) # Display filename
@@ -54,37 +54,30 @@ class MonitorFolder(FileSystemEventHandler):
 
 
 # Function used to load flows from .csv
-def load_flows(src_path):
-	df_flow = pd.DataFrame() # Define new DataFrame
-	#csv_files = []
-	#dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/' + datetime.now().strftime("%d_%m_%Y")
-	#dir_path = 'TCPDUMP_and_CICFlowMeter-master/csv/15_12_2022'
-	#for file in os.listdir(src_path):
-		#if file.endswith('.csv'):
+def load_flows(src_path): # Used to handle new flows
+	df_flow = pd.DataFrame() # Define new DataFrame to hold our flows
 	df_flow = pd.read_csv(src_path) # Read flows from .csv
-	#df_flow = pd.concat(csv_files)
 	print('Loaded', df_flow.shape[0] - 1, 'flows!') # Display amount of flows loaded. -1 because one row is always extra
-	global df_detail # Define global DataFrame for details
 	df_flow = preprocess_dataset(df_flow) # Preprocess the new input data
-	df_detail = df_flow
 	prepare_input(df_flow) # Prepare the input for prediciton
 	#return df_flow
 
-
 # Load prediction labels from .txt file
 def load_labels():
-	list_label = []
-	with open(r'labels.txt', 'r') as label_file:
-		for line in label_file:
-			list_label.append(line[:-1])
+	list_label = [] # Initialize list of labels
+	with open(r'labels.txt', 'r') as label_file: # Open the labels.txt file
+		for line in label_file: # For each line in the file
+			list_label.append(line[:-1]) # Add the label to the list
 	print('Labels loaded.')
-	return list_label
+	return list_label # Return the list of labels
 
 
 # Function used to preprocess dataset
 def preprocess_dataset(df_flow):
 	df_flow = df_flow[df_flow["Flow ID"].str.contains("Flow ID") == False] # Remove the glitched extra columns row that gets added to the .csv
 	df_flow = fix_data_types(df_flow) # Fix the data types
+	global df_detail # Define global DataFrame for details
+	df_detail = df_flow # Save copy of flow details into this DataFrame. This will allow us to keep the info corresponding to each predicted anomaly after the flow DataFrame is cleaned and transformed
 	df_flow = df_flow.drop(columns=['Flow ID','Src IP','Src Port','Timestamp','Protocol','Dst IP']) # Drop unnecesssary columns
 	pd.set_option('use_inf_as_na',True)
 	df_flow = df_flow.replace('Infinity',np.nan) # Replace all infinity with NaN
@@ -112,7 +105,7 @@ def encode_labels():
 
 def prepare_input(df_flow):
 	#sc = MinMaxScaler() # We are using the MinMax scaler from ScikitLearn, used to scale features to a given range
-	sc = joblib.load('scaler_transformCIC17-CIC18.joblib')
+	sc = joblib.load('scaler_transformCIC17CIC18.joblib')
 	x = pd.get_dummies(df_flow.drop(columns = (['Label'])))
 	sc.transform(x) # Fitting the data
 
@@ -170,7 +163,7 @@ def log_details(row):
 			cursor.execute("SELECT * FROM intrusion ORDER BY intrusion_id DESC LIMIT 1")
 			result = cursor.fetchall()
 			intrusion_id = result[0][0]
-			cursor.execute("INSERT INTO detail VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (intrusion_id,row['Dst Port'],row['Flow Duration'],row['Total Fwd Packet'],row['Total Bwd packets'],row['Total Length of Fwd Packet'],row['Total Length of Bwd Packet'],row['Fwd Packet Length Max'],row['Fwd Packet Length Min'],row['Fwd Packet Length Mean'],row['Fwd Packet Length Std'],row['Bwd Packet Length Max'],row['Bwd Packet Length Min'],row['Bwd Packet Length Mean'],row['Bwd Packet Length Std'],row['Flow Bytes/s'],row['Flow Packets/s'],row['Flow IAT Mean'],row['Flow IAT Std'],row['Flow IAT Max'],row['Flow IAT Min'],row['Fwd IAT Total'],row['Fwd IAT Mean'],row['Fwd IAT Std'],row['Fwd IAT Max'],row['Fwd IAT Min'],row['Bwd IAT Total'],row['Bwd IAT Mean'],row['Bwd IAT Std'],row['Bwd IAT Max'],row['Bwd IAT Min'],row['Fwd PSH Flags'],row['Bwd PSH Flags'],row['Fwd URG Flags'],row['Bwd URG Flags'],row['Fwd Header Length'],row['Bwd Header Length'],row['Fwd Packets/s'],row['Bwd Packets/s'],row['Packet Length Min'],row['Packet Length Max'],row['Packet Length Mean'],row['Packet Length Std'],row['Packet Length Variance'],row['FIN Flag Count'],row['SYN Flag Count'],row['RST Flag Count'],row['PSH Flag Count'],row['ACK Flag Count'],row['URG Flag Count'],row['CWR Flag Count'],row['ECE Flag Count'],row['Down/Up Ratio'],row['Average Packet Size'],row['Fwd Segment Size Avg'],row['Bwd Segment Size Avg'],row['Fwd Bytes/Bulk Avg'],row['Fwd Packet/Bulk Avg'],row['Fwd Bulk Rate Avg'],row['Bwd Bytes/Bulk Avg'],row['Bwd Packet/Bulk Avg'],row['Bwd Bulk Rate Avg'],row['Subflow Fwd Packets'],row['Subflow Fwd Bytes'],row['Subflow Bwd Packets'],row['Subflow Bwd Bytes'],row['FWD Init Win Bytes'],row['Bwd Init Win Bytes'],row['Fwd Act Data Pkts'],row['Fwd Seg Size Min'],row['Active Mean'],row['Active Std'],row['Active Max'],row['Active Min'],row['Idle Mean'],row['Idle Std'],row['Idle Max'],row['Idle Min'],))
+			cursor.execute("INSERT INTO detail VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (intrusion_id,row['Dst Port'],row['Flow Duration'],row['Total Fwd Packet'],row['Total Bwd packets'],row['Total Length of Fwd Packet'],row['Total Length of Bwd Packet'],row['Fwd Packet Length Max'],row['Fwd Packet Length Min'],row['Fwd Packet Length Mean'],row['Fwd Packet Length Std'],row['Bwd Packet Length Max'],row['Bwd Packet Length Min'],row['Bwd Packet Length Mean'],row['Bwd Packet Length Std'],row['Flow Bytes/s'],row['Flow Packets/s'],row['Flow IAT Mean'],row['Flow IAT Std'],row['Flow IAT Max'],row['Flow IAT Min'],row['Fwd IAT Total'],row['Fwd IAT Mean'],row['Fwd IAT Std'],row['Fwd IAT Max'],row['Fwd IAT Min'],row['Bwd IAT Total'],row['Bwd IAT Mean'],row['Bwd IAT Std'],row['Bwd IAT Max'],row['Bwd IAT Min'],row['Fwd PSH Flags'],row['Bwd PSH Flags'],row['Fwd URG Flags'],row['Bwd URG Flags'],row['Fwd Header Length'],row['Bwd Header Length'],row['Fwd Packets/s'],row['Bwd Packets/s'],row['Packet Length Min'],row['Packet Length Max'],row['Packet Length Mean'],row['Packet Length Std'],row['Packet Length Variance'],row['FIN Flag Count'],row['SYN Flag Count'],row['RST Flag Count'],row['PSH Flag Count'],row['ACK Flag Count'],row['URG Flag Count'],row['CWR Flag Count'],row['ECE Flag Count'],row['Down/Up Ratio'],row['Average Packet Size'],row['Fwd Segment Size Avg'],row['Bwd Segment Size Avg'],row['Fwd Bytes/Bulk Avg'],row['Fwd Packet/Bulk Avg'],row['Fwd Bulk Rate Avg'],row['Bwd Bytes/Bulk Avg'],row['Bwd Packet/Bulk Avg'],row['Bwd Bulk Rate Avg'],row['Subflow Fwd Packets'],row['Subflow Fwd Bytes'],row['Subflow Bwd Packets'],row['Subflow Bwd Bytes'],row['FWD Init Win Bytes'],row['Bwd Init Win Bytes'],row['Fwd Act Data Pkts'],row['Fwd Seg Size Min'],row['Active Mean'],row['Active Std'],row['Active Max'],row['Active Min'],row['Idle Mean'],row['Idle Std'],row['Idle Max'],row['Idle Min'],row['Src IP'],row['Dst IP']))
 			db.commit()
 			
 			cursor.close()
