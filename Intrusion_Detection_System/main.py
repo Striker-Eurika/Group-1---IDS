@@ -72,11 +72,11 @@ def load_flows(src_path): # Used to handle new flows
 # Load prediction labels from .txt file
 def load_labels():
 	list_label = []
-	with open(r'labels.txt', 'r') as label_file:
+	with open(r'labels.txt', 'r') as label_file: # Open the labels.txt file containing labels for predictions
 		for line in label_file:
-			list_label.append(line[:-1])
+			list_label.append(line[:-1]) # Add the next line to the labels list
 	print('Labels loaded.')
-	return list_label
+	return list_label # Return the list of labels
 
 
 # Function used to preprocess dataset
@@ -104,9 +104,9 @@ def fix_data_types(df_flow):
 
 # Encode labels for prediction model
 def encode_labels():
-	class_list = load_labels()
-	label_encoder = preprocessing.LabelEncoder()
-	label_encoder.fit_transform(class_list)
+	class_list = load_labels() # Load the labels and get the returned label list
+	label_encoder = preprocessing.LabelEncoder() # Create a label encoder from sklearn API
+	label_encoder.fit_transform(class_list) # Fit transform the encoder against the class list
 	return label_encoder
 
 
@@ -125,36 +125,37 @@ def prepare_input(df_flow):
 
 # Creates a list of predictions from fitted flow input, a model and a label encoder
 def predict_from_flow(fitted_input, model, label_encoder):
-	pred = model.predict(fitted_input)
+	pred = model.predict(fitted_input) # Get predictions for each flow from the model
 
-	pred_class = np.argmax(pred, axis=-1)
+	pred_class = np.argmax(pred, axis=-1) # Get the MAX value prediction for each flow (the value with the most confidence)
 
-	predict = label_encoder.inverse_transform(pred_class)
-	list_predictions = predict.tolist()
-	list_anomalies = []
-	list_rows_of_interest = []
-	for i in range (len(list_predictions)):
+	predict = label_encoder.inverse_transform(pred_class) # Inverse transform the predictions against the encoded labels to get the actual prediction classification name
+	list_predictions = predict.tolist() # Transform this array to a list
+	list_anomalies = [] # All the anomalies
+	list_rows_of_interest = [] # All the rows containing anomalies
+	for i in range (len(list_predictions)): # Loop through each prediciton
 		if list_predictions[i] != 'BENIGN': # Ignore BENIGN label outputs
 			print('Anomaly predicted to be', list_predictions[i], 'detected. Confidence: ', pred[i].max()) # Print a message if an anomaly has been identified
 			list_anomalies.append(list_predictions[i]) # Add this prediction to the list of predictions
 			log_intrusion(list_predictions[i]) # Call the function responsible for logging details of the intrusion into the MySQL database
 			log_details(df_detail.iloc[i])# Another function responsible for MySQL. This method logs extra information about the anomalous flows into the database
-	global flow_count
-	global anomaly_count
+	global flow_count # refer to global variable flow_count holding count of flows for this .csv of flows
+	global anomaly_count # refer to global variable anomaly_count holding count of anomalies for this .csv of flows
 	flow_count = len(list_predictions) # Set count of scanned flows
 	anomaly_count = len(list_anomalies) # Set count of identified anomalies
 	print('Scanned', flow_count, 'flow(s) and detected', anomaly_count, 'anomalies.') # Display details of scan
 	print('\nAwaiting flow data...') # Inform program supervisor that the program is once again monitoring for new flow data
 
 
+# Log the intrusion to the MySQL database using the MySQL connector
 def log_intrusion(attack_type):
 	attack_id = attacks[attack_type]
 	try:
-		cursor = db.cursor()
+		cursor = db.cursor() # Open new db cursor. used to execute commands to mysql server
 		try:
-			cursor.execute("INSERT INTO intrusion VALUES (DEFAULT, %s, DEFAULT)", (attack_id,))
-			db.commit()			
-			cursor.close()
+			cursor.execute("INSERT INTO intrusion VALUES (DEFAULT, %s, DEFAULT)", (attack_id,)) # Statement to insert into the database
+			db.commit() # Commit to databse			
+			cursor.close() # Close the database cursor
 		except MySQLdb.IntegrityError:
 			print("Database insert has failed!")
 		finally:
@@ -163,17 +164,17 @@ def log_intrusion(attack_type):
 		print(e)
 
 
+# Log the details of the intrusion into the MySQL database using the connector
 def log_details(row):
 	try:
-		cursor = db.cursor()
+		cursor = db.cursor() # Open new db cursor. used to execute commands to mysql server
 		try:
-			cursor.execute("SELECT * FROM intrusion ORDER BY intrusion_id DESC LIMIT 1")
+			cursor.execute("SELECT * FROM intrusion ORDER BY intrusion_id DESC LIMIT 1") # Execute the statement to get the last inserted intrusion
 			result = cursor.fetchall()
-			intrusion_id = result[0][0]
+			intrusion_id = result[0][0] # Get the ID of the last intrusion
 			cursor.execute("INSERT INTO detail VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (intrusion_id,row['Dst Port'],row['Flow Duration'],row['Total Fwd Packet'],row['Total Bwd packets'],row['Total Length of Fwd Packet'],row['Total Length of Bwd Packet'],row['Fwd Packet Length Max'],row['Fwd Packet Length Min'],row['Fwd Packet Length Mean'],row['Fwd Packet Length Std'],row['Bwd Packet Length Max'],row['Bwd Packet Length Min'],row['Bwd Packet Length Mean'],row['Bwd Packet Length Std'],row['Flow Bytes/s'],row['Flow Packets/s'],row['Flow IAT Mean'],row['Flow IAT Std'],row['Flow IAT Max'],row['Flow IAT Min'],row['Fwd IAT Total'],row['Fwd IAT Mean'],row['Fwd IAT Std'],row['Fwd IAT Max'],row['Fwd IAT Min'],row['Bwd IAT Total'],row['Bwd IAT Mean'],row['Bwd IAT Std'],row['Bwd IAT Max'],row['Bwd IAT Min'],row['Fwd PSH Flags'],row['Bwd PSH Flags'],row['Fwd URG Flags'],row['Bwd URG Flags'],row['Fwd Header Length'],row['Bwd Header Length'],row['Fwd Packets/s'],row['Bwd Packets/s'],row['Packet Length Min'],row['Packet Length Max'],row['Packet Length Mean'],row['Packet Length Std'],row['Packet Length Variance'],row['FIN Flag Count'],row['SYN Flag Count'],row['RST Flag Count'],row['PSH Flag Count'],row['ACK Flag Count'],row['URG Flag Count'],row['CWR Flag Count'],row['ECE Flag Count'],row['Down/Up Ratio'],row['Average Packet Size'],row['Fwd Segment Size Avg'],row['Bwd Segment Size Avg'],row['Fwd Bytes/Bulk Avg'],row['Fwd Packet/Bulk Avg'],row['Fwd Bulk Rate Avg'],row['Bwd Bytes/Bulk Avg'],row['Bwd Packet/Bulk Avg'],row['Bwd Bulk Rate Avg'],row['Subflow Fwd Packets'],row['Subflow Fwd Bytes'],row['Subflow Bwd Packets'],row['Subflow Bwd Bytes'],row['FWD Init Win Bytes'],row['Bwd Init Win Bytes'],row['Fwd Act Data Pkts'],row['Fwd Seg Size Min'],row['Active Mean'],row['Active Std'],row['Active Max'],row['Active Min'],row['Idle Mean'],row['Idle Std'],row['Idle Max'],row['Idle Min'],row['Src IP'],row['Dst IP']))
-			db.commit()
-			
-			cursor.close()
+			db.commit() # Commit to databse
+			cursor.close()# Close the database cursor
 		except MySQLdb.IntegrityError:
 			print("Database insert has failed!")
 		finally:
@@ -216,13 +217,13 @@ def animate(i, xs, ys, xs2, ys2):
 
 	# Adjusting position of second subplot (moving it down a little)
 	pos = ay.get_position() # Get current position of subplot
-	new_pos = [pos.x0, pos.y0-0.1, pos.width, pos.height] # Compute new position (move down 0.05)
+	new_pos = [pos.x0, pos.y0-0.2, pos.width, pos.height] # Compute new position (move down 0.05)
 	ay.set_position(new_pos) # Set new position for subplot
 
 
 # Function displays a 'splash' message stating the name of the group members and project title
 def display_initial_splash():
-	os.system('cls' if os.name == 'nt' else 'clear') # Use os.system to clear the screen with cls for Linux and clear for Windows
+	os.system('cls' if os.name == 'nt' else 'clear') # Use os.system to clear the screen with clear for Linux and cls for Windows
 	print("----")
 	print("Group 1 - Cybersecurity and Data Analytics")
 	print("INTRUSION DETECTION SYSTEM")
@@ -237,28 +238,31 @@ if __name__ == "__main__":
 	label_encoder = encode_labels() # Call label encoding function
 	event_handler = MonitorFolder() # Create new event to handle monitoring the directory
 	observer = Observer() # New observer to watch csv directory
-	observer.schedule(event_handler, path=dir_path, recursive=True)
+	observer.schedule(event_handler, path=dir_path, recursive=True) # Schedule the observer using the event handler and passing the path
 	observer.start()
 
-	display_initial_splash()
+	display_initial_splash() # Display the splash. Prints text with project name and group members names
 
 	# Displaying the live graph with Matplotlib
 	fig = plt.figure() # Create the figure
 
+	# PLOTS
 	ax = fig.add_subplot(211) # First subplot (FLOWS)
 	ay = fig.add_subplot(212) # Second subplot (ANOMALIES)
 
+	# VALUES
 	xs = [] # X values list for first subplot
 	ys = [] # Y Values list for first subplot
-
 	xs2 = [] # X values list for second subplot
 	ys2 = [] # Y values list for second subplot
 	
+	# UPDATING THE GRAPH
 	ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys, xs2, ys2), interval=graph_update_interval_ms) # Call the animation function passing the figure, function arguments and the interval (in ms)
 	plt.show() # Show the graph
+	# looping infinitely and intercepting the keyboard interrupt to stop the observer event
 	try:
 		while(True):
-			time.sleep(1)
+			time.sleep(1) # Sleep for 1 sec... delay
 	except KeyboardInterrupt:
-		observer.stop()
-		observer.join()
+		observer.stop() # Stop the observer event when ctrl + c is pressed
+		observer.join() # Join the main thread
