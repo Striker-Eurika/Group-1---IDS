@@ -62,14 +62,15 @@ def load_flows(src_path): # Used to handle new flows
 	prepare_input(df_flow) # Prepare the input for prediciton
 	#return df_flow
 
-# Load prediction labels from .txt file
-def load_labels():
-	list_label = [] # Initialize list of labels
-	with open(r'labels.txt', 'r') as label_file: # Open the labels.txt file
-		for line in label_file: # For each line in the file
-			list_label.append(line[:-1]) # Add the label to the list
-	print('Labels loaded.')
-	return list_label # Return the list of labels
+# DEPRECATED - Load prediction labels from .txt file
+# def load_labels():
+# 	list_label = [] # Initialize list of labels
+# 	with open(r'labels.txt', 'r') as label_file: # Open the labels.txt file
+# 		for line in label_file: # For each line in the file
+# 			list_label.append(line[:-1]) # Add the label to the list
+# 	print('Labels loaded.')
+# 	return list_label # Return the list of labels
+# WE ARE NOW LOADING THE ENCODED LABELS FROM A .joblib FILE!
 
 
 # Function used to preprocess dataset
@@ -95,12 +96,13 @@ def fix_data_types(df_flow):
 	return df_flow
 
 
-# Encode labels for prediction model
-def encode_labels():
-	class_list = load_labels()
-	label_encoder = preprocessing.LabelEncoder()
-	label_encoder.fit_transform(class_list)
-	return label_encoder
+# DEPRECATED - Encode labels for prediction model
+# def encode_labels():
+# 	class_list = load_labels()
+# 	label_encoder = preprocessing.LabelEncoder()
+# 	label_encoder.fit_transform(class_list)
+# 	return label_encoder
+# WE ARE NOW LOADING THE ENCODED LABELS FROM A .joblib FILE!
 
 
 def prepare_input(df_flow):
